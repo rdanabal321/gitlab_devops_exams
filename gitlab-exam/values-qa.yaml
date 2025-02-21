@@ -1,0 +1,23 @@
+namespace: qa
+
+gateway:
+  image: asram321/gateway:latest
+  replicas: 1
+  service:
+    type: NodePort
+  port: 8000
+  nodePort: 30102
+
+users:
+  image: asram321/users:latest
+  replicas: 1
+  service:
+    type: ClusterIP
+  port: 8000
+
+orders:
+  image: asram321/orders:latest
+  replicas: 1
+  service:
+    type: ClusterIP
+  port: 8000

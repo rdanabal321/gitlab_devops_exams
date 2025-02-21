@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: gateway
+spec:
+  replicas: {{ .Values.gateway.replicas }}
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      initContainers:
+        - name: wait-for-users
+          image: busybox:1.31.1
+          command: ['sh', '-c', 'until wget -qO- http://users:8000/health; do echo waiting for users; sleep 2; done;']
+        - name: wait-for-orders
+          image: busybox:1.31.1
+          command: ['sh', '-c', 'until wget -qO- http://orders:8000/health; do echo waiting for orders; sleep 2; done;']
+      containers:
+        - name: gateway
+          image: {{ .Values.gateway.image }}
+          ports:
+            - containerPort: {{ .Values.gateway.service.port }}
+          envFrom:
+            - configMapRef:
+                name: gateway-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: users
+spec:
+  replicas: {{ .Values.users.replicas }}
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+        - name: users
+          image: {{ .Values.users.image }}
+          ports:
+            - containerPort: {{ .Values.users.service.port }}
+          envFrom:
+            - configMapRef:
+                name: users-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: orders
+spec:
+  replicas: {{ .Values.orders.replicas }}
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: orders
+          image: {{ .Values.orders.image }}
+          ports:
+            - containerPort: {{ .Values.orders.service.port }}
+          envFrom:
+            - configMapRef:
+                name: orders-config
